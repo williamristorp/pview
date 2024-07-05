@@ -1,5 +1,6 @@
 use std::{
     io::{self, Read, Write},
+    process::exit,
     time::Instant,
 };
 
@@ -23,7 +24,7 @@ struct Cli {
         short,
         long,
         value_name = "SIZE",
-        help = "Assume the input data will be SIZE bytes long (you may append binary (base 1024) units such as `K`, `M` or `G`)"
+        help = "Assume the size of the input data will be SIZE bytes (supports binary (base 1024) units such as `K`, `M` or `G`)"
     )]
     size: Option<String>,
 }
@@ -31,8 +32,13 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
+    let expected_size = cli.size.and_then(|s| parse_bytes(&s));
+    if let Some(0) = expected_size {
+        eprintln!("Size of input data cannot be 0.");
+        exit(1);
+    }
+
     let start_time = Instant::now();
-    let total_size = cli.size.and_then(|s| parse_bytes(&s));
     let mut last_progress_time = start_time;
     let mut buffer = [0; BUFFER_SIZE];
     let mut total_bytes_read: u128 = 0;
@@ -55,7 +61,7 @@ fn main() {
             let transfer_rate =
                 format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
 
-            if let Some(size) = total_size {
+            if let Some(size) = expected_size {
                 eprintln!(
                     "TOTAL: {:>9} / {} ({:.2}%), RATE: {}",
                     format_bytes(total_bytes_read),

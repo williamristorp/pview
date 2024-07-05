@@ -37,13 +37,15 @@ pub fn format_transfer_rate(bytes: u128) -> String {
 }
 
 pub fn parse_bytes(string: &str) -> Option<u128> {
-    let digits_end = string.find(|c: char| !c.is_ascii_digit())?;
+    let digits_end = string
+        .find(|c: char| !c.is_ascii_digit())
+        .unwrap_or(string.len());
 
     if digits_end == 0 {
         return None;
     }
 
-    let value = &string[..digits_end].parse::<u128>().ok()?;
+    let value = string[..digits_end].parse::<u128>().ok()?;
 
     let unit = string[digits_end..].trim_start();
     let scalar = match unit.chars().next().map(|c| c.to_ascii_uppercase()) {
@@ -109,6 +111,14 @@ mod tests {
     fn format_24mib() {
         let actual = format_bytes(24 * 1024 * 1024);
         let expected = "24.00MiB";
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_100() {
+        let actual = parse_bytes("100");
+        let expected = Some(100);
 
         assert_eq!(actual, expected);
     }
