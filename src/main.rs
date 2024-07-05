@@ -57,24 +57,24 @@ fn main() {
 
         total_bytes_read += bytes_read as u128;
 
-        let secs_since_last_update = last_progress_time.elapsed().as_secs_f64();
-
-        if secs_since_last_update > cli.interval {
-            let transfer_rate =
-                format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
+        if last_progress_time.elapsed().as_secs_f64() > cli.interval {
+            let elapsed = start_time.elapsed();
+            let transfer_rate = format_transfer_rate(total_bytes_read / elapsed.as_secs() as u128);
 
             if let Some(size) = cli.expected_size {
                 eprintln!(
-                    "TOTAL: {:>9} / {} ({:.2}%), RATE: {}",
+                    "TOTAL: {:>9} / {} ({:.2}%), ELAPSED: {:.2}s, RATE: {}",
                     format_bytes(total_bytes_read),
                     format_bytes(size),
                     total_bytes_read as f64 / size as f64 * 100.0,
+                    elapsed.as_secs_f64(),
                     transfer_rate,
                 );
             } else {
                 eprintln!(
-                    "TOTAL: {:>9}, RATE: {}",
+                    "TOTAL: {:>9}, ELAPSED: {:.2}s, RATE: {}",
                     format_bytes(total_bytes_read),
+                    elapsed.as_secs_f64(),
                     transfer_rate,
                 );
             }
@@ -92,11 +92,10 @@ fn main() {
     }
 
     let elapsed = start_time.elapsed();
-    let transfer_rate =
-        format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
+    let transfer_rate = format_transfer_rate(total_bytes_read / elapsed.as_secs() as u128);
 
     eprintln!(
-        "DONE! TOTAL: {:>9}, ELAPSED: {} s, RATE: {}",
+        "DONE! TOTAL: {:>9}, ELAPSED: {}s, RATE: {}",
         format_bytes(total_bytes_read),
         elapsed.as_secs_f64(),
         transfer_rate,
