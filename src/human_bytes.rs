@@ -12,7 +12,7 @@ pub fn format_bytes(bytes: u128) -> String {
     }
 
     if depth == 0 {
-        return format!("{} B", bytes);
+        return format!("{}B", bytes);
     }
 
     let unit = match depth {
@@ -28,7 +28,7 @@ pub fn format_bytes(bytes: u128) -> String {
         _ => panic!("Your data is too big."),
     };
 
-    format!("{:.2} {}", value, unit)
+    format!("{:.2}{}", value, unit)
 }
 
 pub fn format_transfer_rate(bytes: u128) -> String {
@@ -36,54 +36,127 @@ pub fn format_transfer_rate(bytes: u128) -> String {
     format!("{bytes}/s")
 }
 
+pub fn parse_bytes(string: &str) -> Option<u128> {
+    let digits_end = string.find(|c: char| !c.is_ascii_digit())?;
+
+    if digits_end == 0 {
+        return None;
+    }
+
+    let value = &string[..digits_end].parse::<u128>().ok()?;
+
+    let unit = string[digits_end..].trim_start();
+    let scalar = match unit.chars().next().map(|c| c.to_ascii_uppercase()) {
+        Some('K') => 1024,
+        Some('M') => 1024 * 1024,
+        Some('G') => 1024 * 1024 * 1024,
+        Some('T') => 1024 * 1024 * 1024 * 1024,
+        Some('P') => 1024 * 1024 * 1024 * 1024 * 1024,
+        Some('E') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        Some('Z') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        Some('Y') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+        _ => 1,
+    };
+
+    Some(value * scalar)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn b100() {
+    fn format_100b() {
         let actual = format_bytes(100);
-        let expected = "100 B";
+        let expected = "100B";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn b1024() {
+    fn format_1024b() {
         let actual = format_bytes(1024);
-        let expected = "1.00 KiB";
+        let expected = "1.00KiB";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn b1400() {
+    fn format_1400b() {
         let actual = format_bytes(1400);
-        let expected = "1.37 KiB";
+        let expected = "1.37KiB";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn kib567() {
+    fn format_567kib() {
         let actual = format_bytes(567 * 1024);
-        let expected = "567.00 KiB";
+        let expected = "567.00KiB";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn kib1024() {
+    fn format_1024kib() {
         let actual = format_bytes(1024 * 1024);
-        let expected = "1.00 MiB";
+        let expected = "1.00MiB";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn mib24() {
+    fn format_24mib() {
         let actual = format_bytes(24 * 1024 * 1024);
-        let expected = "24.00 MiB";
+        let expected = "24.00MiB";
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_100b() {
+        let actual = parse_bytes("100B");
+        let expected = Some(100);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_1024b() {
+        let actual = parse_bytes("1024B");
+        let expected = Some(1024);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_1400b() {
+        let actual = parse_bytes("1400B");
+        let expected = Some(1400);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_567kib() {
+        let actual = parse_bytes("567KiB");
+        let expected = Some(567 * 1024);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_1024kib() {
+        let actual = parse_bytes("1024KiB");
+        let expected = Some(1024 * 1024);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_24mib() {
+        let actual = parse_bytes("24MiB");
+        let expected = Some(24 * 1024 * 1024);
 
         assert_eq!(actual, expected);
     }
