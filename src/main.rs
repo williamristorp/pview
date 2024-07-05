@@ -4,6 +4,7 @@ use std::{
 };
 
 use clap::Parser;
+use pview::human_bytes::{format_bytes, format_transfer_rate};
 
 const BUFFER_SIZE: usize = 65536;
 
@@ -43,12 +44,12 @@ fn main() {
 
         if secs_since_last_update > cli.interval {
             let transfer_rate =
-                (total_bytes_read as f64 / 1_000_000.0) / start_time.elapsed().as_secs_f64();
+                format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
 
             eprintln!(
-                "TOTAL: {} MB, RATE: {:.2} MB/s",
-                total_bytes_read / 1_000_000,
-                transfer_rate
+                "TOTAL: {}, RATE: {}",
+                format_bytes(total_bytes_read),
+                transfer_rate,
             );
 
             last_progress_time = Instant::now();
@@ -65,11 +66,11 @@ fn main() {
 
     let elapsed = start_time.elapsed();
     let transfer_rate =
-        (total_bytes_read as f64 / 1_000_000.0) / start_time.elapsed().as_secs_f64();
+        format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
 
     eprintln!(
-        "DONE! TOTAL: {} MB, ELAPSED: {} s, RATE: {:.2} MB/s",
-        total_bytes_read / 1_000_000,
+        "DONE! TOTAL: {}, ELAPSED: {} s, RATE: {}",
+        format_bytes(total_bytes_read),
         elapsed.as_secs_f64(),
         transfer_rate,
     );
