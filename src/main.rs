@@ -1,13 +1,10 @@
 use std::{
     io::{self, Read, Write},
-    process::exit,
     time::Instant,
 };
 
 use clap::Parser;
 use pview::human_bytes::{format_bytes, format_transfer_rate, parse_bytes};
-
-const BUFFER_SIZE: usize = 65536;
 
 #[derive(Parser)]
 struct Cli {
@@ -21,26 +18,31 @@ struct Cli {
     interval: f64,
 
     #[arg(
+        short = 's',
+        long,
+        value_name = "SIZE",
+        help = "Expect the size of the data to be SIZE bytes (supports binary (base 1024) units such as `K`, `M` or `G`)",
+        value_parser = parse_bytes,
+    )]
+    expected_size: Option<u128>,
+
+    #[arg(
         short,
         long,
         value_name = "SIZE",
-        help = "Assume the size of the input data will be SIZE bytes (supports binary (base 1024) units such as `K`, `M` or `G`)"
+        help = "Use a buffer size of SIZE bytes (supports binary (base 1024) units such as `K`, `M` or `G`)",
+        default_value = "64K",
+        value_parser = parse_bytes,
     )]
-    size: Option<String>,
+    buffer_size: u128,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let expected_size = cli.size.and_then(|s| parse_bytes(&s));
-    if let Some(0) = expected_size {
-        eprintln!("Size of input data cannot be 0.");
-        exit(1);
-    }
-
     let start_time = Instant::now();
     let mut last_progress_time = start_time;
-    let mut buffer = [0; BUFFER_SIZE];
+    let mut buffer = vec![0; cli.buffer_size as usize];
     let mut total_bytes_read: u128 = 0;
 
     loop {
@@ -61,7 +63,7 @@ fn main() {
             let transfer_rate =
                 format_transfer_rate(total_bytes_read / start_time.elapsed().as_secs() as u128);
 
-            if let Some(size) = expected_size {
+            if let Some(size) = cli.expected_size {
                 eprintln!(
                     "TOTAL: {:>9} / {} ({:.2}%), RATE: {}",
                     format_bytes(total_bytes_read),

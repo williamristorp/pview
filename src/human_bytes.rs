@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 pub fn format_bytes(bytes: u128) -> String {
     let mut depth = 0;
     let mut value = bytes as f64;
@@ -36,16 +38,12 @@ pub fn format_transfer_rate(bytes: u128) -> String {
     format!("{bytes}/s")
 }
 
-pub fn parse_bytes(string: &str) -> Option<u128> {
+pub fn parse_bytes(string: &str) -> Result<u128, ParseIntError> {
     let digits_end = string
         .find(|c: char| !c.is_ascii_digit())
         .unwrap_or(string.len());
 
-    if digits_end == 0 {
-        return None;
-    }
-
-    let value = string[..digits_end].parse::<u128>().ok()?;
+    let value = string[..digits_end].parse::<u128>()?;
 
     let unit = string[digits_end..].trim_start();
     let scalar = match unit.chars().next().map(|c| c.to_ascii_uppercase()) {
@@ -60,7 +58,7 @@ pub fn parse_bytes(string: &str) -> Option<u128> {
         _ => 1,
     };
 
-    Some(value * scalar)
+    Ok(value * scalar)
 }
 
 #[cfg(test)]
@@ -118,7 +116,7 @@ mod tests {
     #[test]
     fn parse_100() {
         let actual = parse_bytes("100");
-        let expected = Some(100);
+        let expected = Ok(100);
 
         assert_eq!(actual, expected);
     }
@@ -126,7 +124,7 @@ mod tests {
     #[test]
     fn parse_100b() {
         let actual = parse_bytes("100B");
-        let expected = Some(100);
+        let expected = Ok(100);
 
         assert_eq!(actual, expected);
     }
@@ -134,7 +132,7 @@ mod tests {
     #[test]
     fn parse_1024b() {
         let actual = parse_bytes("1024B");
-        let expected = Some(1024);
+        let expected = Ok(1024);
 
         assert_eq!(actual, expected);
     }
@@ -142,7 +140,7 @@ mod tests {
     #[test]
     fn parse_1400b() {
         let actual = parse_bytes("1400B");
-        let expected = Some(1400);
+        let expected = Ok(1400);
 
         assert_eq!(actual, expected);
     }
@@ -150,7 +148,7 @@ mod tests {
     #[test]
     fn parse_567kib() {
         let actual = parse_bytes("567KiB");
-        let expected = Some(567 * 1024);
+        let expected = Ok(567 * 1024);
 
         assert_eq!(actual, expected);
     }
@@ -158,7 +156,7 @@ mod tests {
     #[test]
     fn parse_1024kib() {
         let actual = parse_bytes("1024KiB");
-        let expected = Some(1024 * 1024);
+        let expected = Ok(1024 * 1024);
 
         assert_eq!(actual, expected);
     }
@@ -166,7 +164,7 @@ mod tests {
     #[test]
     fn parse_24mib() {
         let actual = parse_bytes("24MiB");
-        let expected = Some(24 * 1024 * 1024);
+        let expected = Ok(24 * 1024 * 1024);
 
         assert_eq!(actual, expected);
     }
