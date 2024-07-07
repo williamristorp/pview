@@ -104,7 +104,7 @@ fn main() {
         progress_displayer,
     );
 
-    pipe_viewer.display();
+    pipe_viewer.init_display();
 
     for file in &cli.files {
         if file.to_str() == Some("-") {
@@ -119,5 +119,5 @@ fn main() {
         }
     }
 
-    pipe_viewer.display();
+    pipe_viewer.exit_display();
 }

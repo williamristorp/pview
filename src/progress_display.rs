@@ -11,6 +11,14 @@ pub enum ProgressDisplayer {
 }
 
 impl ProgressDisplay for ProgressDisplayer {
+    fn init_display(&self, progress_stats: ProgressStats) {
+        match self {
+            ProgressDisplayer::Silent => (),
+            ProgressDisplayer::Log(ld) => ld.init_display(progress_stats),
+            ProgressDisplayer::Interactive(id) => id.init_display(progress_stats),
+        }
+    }
+
     fn display_progress(&self, progress_stats: ProgressStats) {
         match self {
             ProgressDisplayer::Silent => (),
@@ -18,16 +26,28 @@ impl ProgressDisplay for ProgressDisplayer {
             ProgressDisplayer::Interactive(id) => id.display_progress(progress_stats),
         }
     }
+
+    fn exit_display(&self, progress_stats: ProgressStats) {
+        match self {
+            ProgressDisplayer::Silent => (),
+            ProgressDisplayer::Log(ld) => ld.exit_display(progress_stats),
+            ProgressDisplayer::Interactive(id) => id.exit_display(progress_stats),
+        }
+    }
 }
 
 pub trait ProgressDisplay {
+    fn init_display(&self, progress_stats: ProgressStats);
     fn display_progress(&self, progress_stats: ProgressStats);
+    fn exit_display(&self, progress_stats: ProgressStats);
 }
 
 #[derive(Debug, Clone)]
 pub struct LogDisplay;
 
 impl ProgressDisplay for LogDisplay {
+    fn init_display(&self, _progress_stats: ProgressStats) {}
+
     fn display_progress(&self, progress_stats: ProgressStats) {
         let elapsed = progress_stats.start_time.elapsed();
         let transfer_rate = format_transfer_rate(progress_stats.transfer_rate());
@@ -50,17 +70,15 @@ impl ProgressDisplay for LogDisplay {
             );
         }
     }
+
+    fn exit_display(&self, _progress_stats: ProgressStats) {}
 }
 
 #[derive(Debug, Clone)]
 pub struct InteractiveDisplay;
 
-impl ProgressDisplay for InteractiveDisplay {
-    fn display_progress(&self, progress_stats: ProgressStats) {
-        eprint!("\x1B[1A\x1B[2K");
-        eprint!("\x1B[1A\x1B[2K");
-        eprint!("\x1B[1A\x1B[2K");
-
+impl InteractiveDisplay {
+    fn display(&self, progress_stats: ProgressStats) {
         let term_width = term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80);
 
         if let Some(expected_size) = progress_stats.expected_size {
@@ -121,5 +139,23 @@ impl ProgressDisplay for InteractiveDisplay {
                 format_transfer_rate(progress_stats.average_transfer_rate()),
             );
         }
+    }
+}
+
+impl ProgressDisplay for InteractiveDisplay {
+    fn init_display(&self, progress_stats: ProgressStats) {
+        self.display(progress_stats);
+    }
+
+    fn display_progress(&self, progress_stats: ProgressStats) {
+        eprint!("\x1B[1A\x1B[2K");
+        eprint!("\x1B[1A\x1B[2K");
+        eprint!("\x1B[1A\x1B[2K");
+
+        self.display(progress_stats);
+    }
+
+    fn exit_display(&self, progress_stats: ProgressStats) {
+        self.display_progress(progress_stats);
     }
 }

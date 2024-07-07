@@ -113,6 +113,18 @@ impl PipeViewer {
         Ok(())
     }
 
+    pub fn init_display(&self) {
+        let progress_stats = ProgressStats {
+            bytes_processed: self.bytes_processed,
+            expected_size: self.expected_size,
+            start_time: self.start_time,
+            last_display: self.last_display,
+            bytes_processed_since_last_display: self.bytes_processed_since_last_display,
+        };
+
+        self.progress_displayer.init_display(progress_stats);
+    }
+
     pub fn display(&self) {
         let progress_stats = ProgressStats {
             bytes_processed: self.bytes_processed,
@@ -123,5 +135,17 @@ impl PipeViewer {
         };
 
         self.progress_displayer.display_progress(progress_stats);
+    }
+
+    pub fn exit_display(&self) {
+        let progress_stats = ProgressStats {
+            bytes_processed: self.bytes_processed,
+            expected_size: self.expected_size,
+            start_time: self.start_time,
+            last_display: self.last_display,
+            bytes_processed_since_last_display: self.bytes_processed_since_last_display,
+        };
+
+        self.progress_displayer.exit_display(progress_stats);
     }
 }
