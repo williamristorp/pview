@@ -4,7 +4,7 @@ pub mod progress_display;
 use progress_display::{ProgressDisplay, ProgressDisplayer};
 
 use std::{
-    io::{Read, Write},
+    io::{self, Read, Write},
     time::Instant,
 };
 
@@ -66,15 +66,11 @@ impl PipeViewer {
         }
     }
 
-    pub fn process(&mut self, input: &mut impl Read, output: &mut impl Write) {
+    pub fn process(&mut self, input: &mut impl Read, output: &mut impl Write) -> io::Result<()> {
         loop {
-            let bytes_read = match input.read(&mut self.buffer) {
-                Ok(0) => break,
-                Ok(n) => n,
-                Err(e) => {
-                    eprintln!("Error reading from STDIN: {e}");
-                    break;
-                }
+            let bytes_read = match input.read(&mut self.buffer)? {
+                0 => break,
+                n => n,
             };
 
             self.bytes_processed += bytes_read as u128;
@@ -86,14 +82,10 @@ impl PipeViewer {
                 self.bytes_processed_since_last_display = 0;
             }
 
-            match output.write_all(&self.buffer[..bytes_read]) {
-                Ok(_) => (),
-                Err(e) => {
-                    eprintln!("Error writing to STDOUT: {e}");
-                    break;
-                }
-            }
+            output.write_all(&self.buffer[..bytes_read])?;
         }
+
+        Ok(())
     }
 
     pub fn display(&self) {

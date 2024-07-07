@@ -89,10 +89,14 @@ fn main() {
 
     for file in cli.files {
         if file.to_str() == Some("-") {
-            pipe_viewer.process(&mut io::stdin(), &mut io::stdout());
+            pipe_viewer
+                .process(&mut io::stdin(), &mut io::stdout())
+                .unwrap();
         } else {
             let mut input_file = fs::File::open(file).unwrap();
-            pipe_viewer.process(&mut input_file, &mut io::stdout());
+            pipe_viewer
+                .process(&mut input_file, &mut io::stdout())
+                .unwrap();
         }
     }
 
