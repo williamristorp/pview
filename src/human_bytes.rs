@@ -1,4 +1,4 @@
-use std::num::ParseIntError;
+use std::num::ParseFloatError;
 
 pub fn format_bytes(bytes: u128) -> String {
     let value = bytes as f64;
@@ -26,27 +26,29 @@ pub fn format_transfer_rate(transfer_rate: f64) -> String {
     format!("{bytes}/s")
 }
 
-pub fn parse_bytes(string: &str) -> Result<u128, ParseIntError> {
+pub fn parse_bytes(string: &str) -> Result<u128, ParseFloatError> {
     let digits_end = string
-        .find(|c: char| !c.is_ascii_digit())
+        .find(|c: char| !c.is_ascii_digit() && c != '.')
         .unwrap_or(string.len());
 
-    let value = string[..digits_end].parse::<u128>()?;
+    let value = string[..digits_end].parse::<f64>()?;
 
     let unit = string[digits_end..].trim_start();
     let scalar = match unit.chars().next().map(|c| c.to_ascii_uppercase()) {
-        Some('K') => 1024,
-        Some('M') => 1024 * 1024,
-        Some('G') => 1024 * 1024 * 1024,
-        Some('T') => 1024 * 1024 * 1024 * 1024,
-        Some('P') => 1024 * 1024 * 1024 * 1024 * 1024,
-        Some('E') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
-        Some('Z') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
-        Some('Y') => 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
-        _ => 1,
+        Some('K') => 1024.0,
+        Some('M') => 1024.0 * 1024.0,
+        Some('G') => 1024.0 * 1024.0 * 1024.0,
+        Some('T') => 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        Some('P') => 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        Some('E') => 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        Some('Z') => 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        Some('Y') => 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0,
+        _ => 1.0,
     };
 
-    Ok(value * scalar)
+    let bytes = (value * scalar) as u128;
+
+    Ok(bytes)
 }
 
 #[cfg(test)]
