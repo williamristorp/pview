@@ -18,14 +18,23 @@ pub struct ProgressStats {
 }
 
 impl ProgressStats {
-    pub fn transfer_rate(&self) -> u128 {
-        let elapsed = self.last_display.elapsed().as_secs_f64();
-        ((self.bytes_processed_since_last_display as f64) / elapsed) as u128
+    pub fn remaining_bytes(&self) -> Option<u128> {
+        self.expected_size.map(|s| s - self.bytes_processed)
     }
 
-    pub fn average_transfer_rate(&self) -> u128 {
+    pub fn progress_percentage(&self) -> Option<f64> {
+        self.expected_size
+            .map(|s| (self.bytes_processed as f64 / s as f64) * 100.0)
+    }
+
+    pub fn transfer_rate(&self) -> f64 {
+        let elapsed = self.last_display.elapsed().as_secs_f64();
+        (self.bytes_processed_since_last_display as f64) / elapsed
+    }
+
+    pub fn average_transfer_rate(&self) -> f64 {
         let elapsed = self.start_time.elapsed().as_secs_f64();
-        ((self.bytes_processed as f64) / elapsed) as u128
+        (self.bytes_processed as f64) / elapsed
     }
 }
 

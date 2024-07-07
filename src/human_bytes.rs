@@ -33,8 +33,8 @@ pub fn format_bytes(bytes: u128) -> String {
     format!("{:.2}{}", value, unit)
 }
 
-pub fn format_transfer_rate(bytes: u128) -> String {
-    let bytes = format_bytes(bytes);
+pub fn format_transfer_rate(transfer_rate: f64) -> String {
+    let bytes = format_bytes(transfer_rate as u128);
     format!("{bytes}/s")
 }
 

@@ -30,12 +30,7 @@ pub struct LogDisplay;
 impl ProgressDisplay for LogDisplay {
     fn display_progress(&self, progress_stats: ProgressStats) {
         let elapsed = progress_stats.start_time.elapsed();
-        let transfer_rate = format_transfer_rate(
-            progress_stats
-                .bytes_processed
-                .checked_div(elapsed.as_secs() as u128)
-                .unwrap_or(0),
-        );
+        let transfer_rate = format_transfer_rate(progress_stats.transfer_rate());
 
         if let Some(size) = progress_stats.expected_size {
             eprintln!(
