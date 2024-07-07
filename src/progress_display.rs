@@ -3,16 +3,28 @@ use crate::{
     ProgressStats,
 };
 
+#[derive(Debug, Clone)]
+pub enum ProgressDisplayer {
+    Silent,
+    Log(LogDisplay),
+    Interactive(InteractiveDisplay),
+}
+
+impl ProgressDisplay for ProgressDisplayer {
+    fn display_progress(&self, progress_stats: ProgressStats) {
+        match self {
+            ProgressDisplayer::Silent => (),
+            ProgressDisplayer::Log(ld) => ld.display_progress(progress_stats),
+            ProgressDisplayer::Interactive(id) => id.display_progress(progress_stats),
+        }
+    }
+}
+
 pub trait ProgressDisplay {
     fn display_progress(&self, progress_stats: ProgressStats);
 }
 
-pub struct SilentDisplay;
-
-impl ProgressDisplay for SilentDisplay {
-    fn display_progress(&self, _progress_stats: ProgressStats) {}
-}
-
+#[derive(Debug, Clone)]
 pub struct LogDisplay;
 
 impl ProgressDisplay for LogDisplay {
@@ -45,6 +57,7 @@ impl ProgressDisplay for LogDisplay {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct InteractiveDisplay;
 
 impl ProgressDisplay for InteractiveDisplay {

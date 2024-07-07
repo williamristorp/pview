@@ -1,7 +1,7 @@
 pub mod human_bytes;
 pub mod progress_display;
 
-use progress_display::ProgressDisplay;
+use progress_display::{ProgressDisplay, ProgressDisplayer};
 
 use std::{
     io::{Read, Write},
@@ -30,7 +30,7 @@ impl ProgressStats {
 }
 
 #[derive(Debug, Clone)]
-pub struct PipeViewer<T: ProgressDisplay> {
+pub struct PipeViewer {
     bytes_processed: u128,
     buffer: Vec<u8>,
     start_time: Instant,
@@ -38,15 +38,15 @@ pub struct PipeViewer<T: ProgressDisplay> {
     bytes_processed_since_last_display: u128,
     expected_size: Option<u128>,
     interval: f64,
-    progress_display: T,
+    progress_displayer: ProgressDisplayer,
 }
 
-impl<T: ProgressDisplay> PipeViewer<T> {
+impl PipeViewer {
     pub fn new(
         buffer_size: usize,
         expected_size: Option<u128>,
         interval: f64,
-        progress_display: T,
+        progress_displayer: ProgressDisplayer,
     ) -> Self {
         let bytes_processed = 0;
         let bytes_processed_since_last_display = 0;
@@ -62,13 +62,11 @@ impl<T: ProgressDisplay> PipeViewer<T> {
             bytes_processed_since_last_display,
             expected_size,
             interval,
-            progress_display,
+            progress_displayer,
         }
     }
 
     pub fn process(&mut self, input: &mut impl Read, output: &mut impl Write) {
-        self.display();
-
         loop {
             let bytes_read = match input.read(&mut self.buffer) {
                 Ok(0) => break,
@@ -98,7 +96,7 @@ impl<T: ProgressDisplay> PipeViewer<T> {
         }
     }
 
-    fn display(&self) {
+    pub fn display(&self) {
         let progress_stats = ProgressStats {
             bytes_processed: self.bytes_processed,
             expected_size: self.expected_size,
@@ -107,6 +105,6 @@ impl<T: ProgressDisplay> PipeViewer<T> {
             bytes_processed_since_last_display: self.bytes_processed_since_last_display,
         };
 
-        self.progress_display.display_progress(progress_stats);
+        self.progress_displayer.display_progress(progress_stats);
     }
 }

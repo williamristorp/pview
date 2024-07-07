@@ -1,15 +1,26 @@
 use pview::{
     human_bytes::parse_bytes,
-    progress_display::{InteractiveDisplay, LogDisplay, SilentDisplay},
+    progress_display::{InteractiveDisplay, LogDisplay, ProgressDisplayer},
     PipeViewer,
 };
 
-use std::io::{self, IsTerminal};
+use std::{
+    fs,
+    io::{self, IsTerminal},
+    path::PathBuf,
+};
 
 use clap::{Parser, ValueEnum};
 
 #[derive(Parser)]
 pub struct Cli {
+    #[arg(
+        value_name = "FILE",
+        help = "Copy each FILE to standard output in sequence. Use `-` for standard input.",
+        default_value = "-"
+    )]
+    pub files: Vec<PathBuf>,
+
     #[arg(
         short,
         long,
@@ -59,36 +70,31 @@ pub enum OutputOption {
 fn main() {
     let cli = Cli::parse();
 
-    match cli.output {
+    let progress_displayer = match cli.output {
         OutputOption::Interactive | OutputOption::Auto if io::stderr().is_terminal() => {
-            let progress_display = InteractiveDisplay {};
-            let mut pipe_viewer = PipeViewer::new(
-                cli.buffer_size as usize,
-                cli.expected_size,
-                cli.interval,
-                progress_display,
-            );
-            pipe_viewer.process(&mut io::stdin(), &mut io::stdout());
+            ProgressDisplayer::Interactive(InteractiveDisplay {})
         }
-        OutputOption::Log => {
-            let progress_display = LogDisplay {};
-            let mut pipe_viewer = PipeViewer::new(
-                cli.buffer_size as usize,
-                cli.expected_size,
-                cli.interval,
-                progress_display,
-            );
-            pipe_viewer.process(&mut io::stdin(), &mut io::stdout());
-        }
-        _ => {
-            let progress_display = SilentDisplay {};
-            let mut pipe_viewer = PipeViewer::new(
-                cli.buffer_size as usize,
-                cli.expected_size,
-                cli.interval,
-                progress_display,
-            );
-            pipe_viewer.process(&mut io::stdin(), &mut io::stdout());
-        }
+        OutputOption::Log => ProgressDisplayer::Log(LogDisplay {}),
+        _ => ProgressDisplayer::Silent,
     };
+
+    let mut pipe_viewer = PipeViewer::new(
+        cli.buffer_size as usize,
+        cli.expected_size,
+        cli.interval,
+        progress_displayer,
+    );
+
+    pipe_viewer.display();
+
+    for file in cli.files {
+        if file.to_str() == Some("-") {
+            pipe_viewer.process(&mut io::stdin(), &mut io::stdout());
+        } else {
+            let mut input_file = fs::File::open(file).unwrap();
+            pipe_viewer.process(&mut input_file, &mut io::stdout());
+        }
+    }
+
+    pipe_viewer.display();
 }
