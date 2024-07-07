@@ -53,13 +53,6 @@ impl ProgressDisplay for InteractiveDisplay {
         eprint!("\x1B[1A\x1B[2K");
 
         let term_width = term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80);
-        let elapsed = progress_stats.start_time.elapsed();
-        let transfer_rate = format_transfer_rate(
-            progress_stats
-                .bytes_processed
-                .checked_div(elapsed.as_secs() as u128)
-                .unwrap_or(0),
-        );
 
         if let Some(size) = progress_stats.expected_size {
             let percent = progress_stats.bytes_processed as f64 / size as f64;
@@ -72,16 +65,19 @@ impl ProgressDisplay for InteractiveDisplay {
                 (percent * 100.0).min(100.0),
                 "=".repeat(num_filled),
                 " ".repeat(bar_width.saturating_sub(num_filled)),
-                transfer_rate,
+                format_transfer_rate(progress_stats.transfer_rate()),
             );
         } else {
             eprintln!(
                 "{:>10} {:<10}",
                 format_bytes(progress_stats.bytes_processed),
-                transfer_rate
+                format_transfer_rate(progress_stats.transfer_rate()),
             );
         }
 
-        eprintln!("{:>12}", transfer_rate);
+        eprintln!(
+            "{:>12}",
+            format_transfer_rate(progress_stats.average_transfer_rate())
+        );
     }
 }
