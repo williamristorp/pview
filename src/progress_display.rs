@@ -64,7 +64,7 @@ impl ProgressDisplay for InteractiveDisplay {
 
         if let Some(size) = progress_stats.expected_size {
             let percent = progress_stats.bytes_processed as f64 / size as f64;
-            let bar_width = term_width - 47;
+            let bar_width = term_width - 49;
             let num_filled = ((percent * bar_width as f64) as usize).min(bar_width);
             eprintln!(
                 "{:>10} / {} ({:6.2}%) [{}{}] {}",

@@ -1,20 +1,11 @@
 use std::num::ParseIntError;
 
 pub fn format_bytes(bytes: u128) -> String {
-    let mut depth = 0;
-    let mut value = bytes as f64;
-
-    while value / 1024.0 >= 1.0 {
-        depth += 1;
-        value /= 1024.0;
-    }
-
-    if depth == 0 {
-        return format!("{}B", bytes);
-    }
+    let value = bytes as f64;
+    let depth = (value.log2() / 10.0).floor() as usize;
 
     let unit = match depth {
-        0 => unreachable!(),
+        0 => return format!("{}B", bytes),
         1 => "KiB",
         2 => "MiB",
         3 => "GiB",
@@ -26,6 +17,7 @@ pub fn format_bytes(bytes: u128) -> String {
         _ => panic!("Your data is too big."),
     };
 
+    let value = value / 1024.0_f64.powi(depth as i32);
     format!("{:.2}{}", value, unit)
 }
 
