@@ -27,7 +27,7 @@ impl ProgressDisplay for LogDisplay {
 
         if let Some(size) = progress_stats.expected_size {
             eprintln!(
-                "TOTAL: {:>9} / {} ({:.2}%), ELAPSED: {:.2}s, RATE: {}",
+                "TOTAL: {:>10} / {} ({:.2}%), ELAPSED: {:.2}s, RATE: {}",
                 format_bytes(progress_stats.bytes_processed),
                 format_bytes(size),
                 progress_stats.bytes_processed as f64 / size as f64 * 100.0,
@@ -36,7 +36,7 @@ impl ProgressDisplay for LogDisplay {
             );
         } else {
             eprintln!(
-                "TOTAL: {:>9}, ELAPSED: {:.2}s, RATE: {}",
+                "TOTAL: {:>10}, ELAPSED: {:.2}s, RATE: {}",
                 format_bytes(progress_stats.bytes_processed),
                 elapsed.as_secs_f64(),
                 transfer_rate,
@@ -59,15 +59,14 @@ impl ProgressDisplay for InteractiveDisplay {
                 .bytes_processed
                 .checked_div(elapsed.as_secs() as u128)
                 .unwrap_or(0),
-        )
-        .to_string();
+        );
 
         if let Some(size) = progress_stats.expected_size {
             let percent = progress_stats.bytes_processed as f64 / size as f64;
-            let bar_width = term_width - 49;
+            let bar_width = term_width - 47;
             let num_filled = ((percent * bar_width as f64) as usize).min(bar_width);
             eprintln!(
-                "{:>9} / {} ({:6.2}%) [{}{}] {}",
+                "{:>10} / {} ({:6.2}%) [{}{}] {}",
                 format_bytes(progress_stats.bytes_processed),
                 format_bytes(size),
                 (percent * 100.0).min(100.0),
@@ -77,12 +76,12 @@ impl ProgressDisplay for InteractiveDisplay {
             );
         } else {
             eprintln!(
-                "{:>9} {:<10}",
+                "{:>10} {:<10}",
                 format_bytes(progress_stats.bytes_processed),
                 transfer_rate
             );
         }
 
-        eprintln!("{:>11}", transfer_rate);
+        eprintln!("{:>12}", transfer_rate);
     }
 }
