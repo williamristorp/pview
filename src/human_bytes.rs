@@ -1,4 +1,4 @@
-use std::num::ParseFloatError;
+use std::{num::ParseFloatError, time::Duration};
 
 pub fn format_bytes(bytes: u128) -> String {
     let value = bytes as f64;
@@ -49,6 +49,15 @@ pub fn parse_bytes(string: &str) -> Result<u128, ParseFloatError> {
     let bytes = (value * scalar) as u128;
 
     Ok(bytes)
+}
+
+pub fn format_duration(duration: Duration) -> String {
+    let seconds = duration.as_secs_f64();
+    let hours = seconds / 3600.0;
+    let minutes = hours / 60.0;
+    let seconds = seconds % 60.0;
+
+    format!("{:0>2.0}:{:0>2.0}:{:0>2.0}", hours, minutes, seconds)
 }
 
 #[cfg(test)]

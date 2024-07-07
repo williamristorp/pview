@@ -1,5 +1,5 @@
 use crate::{
-    human_bytes::{format_bytes, format_transfer_rate},
+    human_bytes::{format_bytes, format_duration, format_transfer_rate},
     ProgressStats,
 };
 
@@ -64,28 +64,37 @@ impl ProgressDisplay for InteractiveDisplay {
 
         if let Some(size) = progress_stats.expected_size {
             let percent = progress_stats.bytes_processed as f64 / size as f64;
-            let bar_width = term_width - 49;
+            let stats = format!(
+                "{} @{} ({:.2}%)",
+                format_bytes(progress_stats.bytes_processed),
+                format_transfer_rate(progress_stats.transfer_rate()),
+                progress_stats.progress_percentage().unwrap()
+            );
+
+            let bar_width = term_width - stats.len() - 3;
             let num_filled = ((percent * bar_width as f64) as usize).min(bar_width);
             eprintln!(
-                "{:>10} / {} ({:6.2}%) [{}{}] {}",
-                format_bytes(progress_stats.bytes_processed),
-                format_bytes(size),
-                (percent * 100.0).min(100.0),
+                "{stats} [{}{}]",
                 "=".repeat(num_filled),
                 " ".repeat(bar_width.saturating_sub(num_filled)),
-                format_transfer_rate(progress_stats.transfer_rate()),
+            );
+
+            eprintln!(
+                "{} ETA {}",
+                format_transfer_rate(progress_stats.average_transfer_rate()),
+                format_duration(progress_stats.time_remaining().unwrap()),
             );
         } else {
             eprintln!(
-                "{:>10} {:<10}",
+                "{} @{}",
                 format_bytes(progress_stats.bytes_processed),
                 format_transfer_rate(progress_stats.transfer_rate()),
             );
-        }
 
-        eprintln!(
-            "{:>12}",
-            format_transfer_rate(progress_stats.average_transfer_rate())
-        );
+            eprintln!(
+                "{}",
+                format_transfer_rate(progress_stats.average_transfer_rate()),
+            );
+        }
     }
 }

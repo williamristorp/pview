@@ -5,7 +5,7 @@ use progress_display::{ProgressDisplay, ProgressDisplayer};
 
 use std::{
     io::{self, Read, Write},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 #[derive(Debug, Clone)]
@@ -19,7 +19,8 @@ pub struct ProgressStats {
 
 impl ProgressStats {
     pub fn remaining_bytes(&self) -> Option<u128> {
-        self.expected_size.map(|s| s - self.bytes_processed)
+        self.expected_size
+            .map(|s| s.saturating_sub(self.bytes_processed))
     }
 
     pub fn progress_percentage(&self) -> Option<f64> {
@@ -35,6 +36,21 @@ impl ProgressStats {
     pub fn average_transfer_rate(&self) -> f64 {
         let elapsed = self.start_time.elapsed().as_secs_f64();
         (self.bytes_processed as f64) / elapsed
+    }
+
+    pub fn eta(&self) -> Option<Instant> {
+        self.remaining_bytes().map(|remaining| {
+            if remaining > 0 && self.transfer_rate() > 0.0 {
+                let seconds_left = (remaining as f64 / self.transfer_rate()).max(0.0);
+                self.last_display + Duration::from_secs_f64(seconds_left)
+            } else {
+                self.last_display
+            }
+        })
+    }
+
+    pub fn time_remaining(&self) -> Option<Duration> {
+        self.eta().map(|eta| eta.duration_since(Instant::now()))
     }
 }
 
