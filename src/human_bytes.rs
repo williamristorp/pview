@@ -4,13 +4,9 @@ pub fn format_bytes(bytes: u128) -> String {
     let mut depth = 0;
     let mut value = bytes as f64;
 
-    loop {
-        if value / 1024.0 >= 1.0 {
-            depth += 1;
-            value /= 1024.0;
-        } else {
-            break;
-        }
+    while value / 1024.0 >= 1.0 {
+        depth += 1;
+        value /= 1024.0;
     }
 
     if depth == 0 {
