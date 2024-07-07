@@ -1,5 +1,3 @@
-use std::iter::repeat;
-
 use crate::{
     human_bytes::{format_bytes, format_transfer_rate},
     ProgressStats,
@@ -56,15 +54,13 @@ impl ProgressDisplay for InteractiveDisplay {
 
         let term_width = term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80);
         let elapsed = progress_stats.start_time.elapsed();
-        let transfer_rate = format!(
-            "{}",
-            format_transfer_rate(
-                progress_stats
-                    .bytes_processed
-                    .checked_div(elapsed.as_secs() as u128)
-                    .unwrap_or(0)
-            )
-        );
+        let transfer_rate = format_transfer_rate(
+            progress_stats
+                .bytes_processed
+                .checked_div(elapsed.as_secs() as u128)
+                .unwrap_or(0),
+        )
+        .to_string();
 
         if let Some(size) = progress_stats.expected_size {
             let percent = progress_stats.bytes_processed as f64 / size as f64;
@@ -75,10 +71,8 @@ impl ProgressDisplay for InteractiveDisplay {
                 format_bytes(progress_stats.bytes_processed),
                 format_bytes(size),
                 (percent * 100.0).min(100.0),
-                repeat('=').take(num_filled).collect::<String>(),
-                repeat(' ')
-                    .take(bar_width.saturating_sub(num_filled))
-                    .collect::<String>(),
+                "=".repeat(num_filled),
+                " ".repeat(bar_width.saturating_sub(num_filled)),
                 transfer_rate,
             );
         } else {
