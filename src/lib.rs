@@ -25,7 +25,7 @@ impl ProgressStats {
 
     pub fn progress_percentage(&self) -> Option<f64> {
         self.expected_size
-            .map(|s| (self.bytes_processed as f64 / s as f64) * 100.0)
+            .map(|s| self.bytes_processed as f64 / s as f64)
     }
 
     pub fn transfer_rate(&self) -> f64 {

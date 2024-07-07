@@ -59,24 +59,47 @@ impl ProgressDisplay for InteractiveDisplay {
     fn display_progress(&self, progress_stats: ProgressStats) {
         eprint!("\x1B[1A\x1B[2K");
         eprint!("\x1B[1A\x1B[2K");
+        eprint!("\x1B[1A\x1B[2K");
 
         let term_width = term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80);
 
-        if let Some(size) = progress_stats.expected_size {
-            let percent = progress_stats.bytes_processed as f64 / size as f64;
-            let stats = format!(
-                "{} @{} ({:.2}%)",
+        if let Some(expected_size) = progress_stats.expected_size {
+            let percent = progress_stats.progress_percentage().unwrap();
+            let pre_bar = format!(
+                "{:>10} @{:<12} ",
                 format_bytes(progress_stats.bytes_processed),
                 format_transfer_rate(progress_stats.transfer_rate()),
-                progress_stats.progress_percentage().unwrap()
             );
+            let post_bar = format!("{}", format_bytes(expected_size));
 
-            let bar_width = term_width - stats.len() - 3;
+            let bar_width = term_width - pre_bar.len() - post_bar.len() - 4;
             let num_filled = ((percent * bar_width as f64) as usize).min(bar_width);
+
+            if progress_stats.bytes_processed == 0 {
+                eprintln!(
+                    "{pre_bar}\u{251D}\u{252D}{}\u{2524} {post_bar}",
+                    "\u{254C}".repeat(bar_width.saturating_sub(num_filled + 1)),
+                );
+            } else if percent < 1.0 {
+                eprintln!(
+                    "{pre_bar}\u{251D}{}\u{252D}{}\u{2524} {post_bar}",
+                    "\u{2501}".repeat(num_filled.saturating_sub(1)),
+                    "\u{254C}".repeat(bar_width.saturating_sub(num_filled)),
+                );
+            } else {
+                eprintln!(
+                    "{pre_bar}\u{251D}{}\u{2525} {post_bar}",
+                    "\u{2501}".repeat(bar_width)
+                );
+            }
+
+            let sub_bar = format!(
+                "{:.1}%",
+                progress_stats.progress_percentage().unwrap() * 100.0
+            );
             eprintln!(
-                "{stats} [{}{}]",
-                "=".repeat(num_filled),
-                " ".repeat(bar_width.saturating_sub(num_filled)),
+                "{}{sub_bar}",
+                " ".repeat(pre_bar.len() + num_filled - sub_bar.len() / 2)
             );
 
             eprintln!(
@@ -90,6 +113,8 @@ impl ProgressDisplay for InteractiveDisplay {
                 format_bytes(progress_stats.bytes_processed),
                 format_transfer_rate(progress_stats.transfer_rate()),
             );
+
+            eprintln!();
 
             eprintln!(
                 "{}",
