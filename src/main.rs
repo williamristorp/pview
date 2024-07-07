@@ -78,16 +78,35 @@ fn main() {
         _ => ProgressDisplayer::Silent,
     };
 
+    let expected_size = match cli.expected_size.unwrap_or_else(|| {
+        cli.files
+            .iter()
+            .filter(|f| f.to_str() != Some("-"))
+            .filter_map(|f| fs::metadata(f).ok())
+            .filter(|md| md.is_file())
+            .map(|md| md.len() as u128)
+            .sum()
+    }) {
+        0 => None,
+        n => Some(n),
+    };
+
+    for file in &cli.files {
+        if file.to_str() == Some("-") {
+            continue;
+        }
+    }
+
     let mut pipe_viewer = PipeViewer::new(
         cli.buffer_size as usize,
-        cli.expected_size,
+        expected_size,
         cli.interval,
         progress_displayer,
     );
 
     pipe_viewer.display();
 
-    for file in cli.files {
+    for file in &cli.files {
         if file.to_str() == Some("-") {
             pipe_viewer
                 .process(&mut io::stdin(), &mut io::stdout())
