@@ -60,6 +60,15 @@ pub fn format_duration(duration: Duration) -> String {
     format!("{:0>2.0}:{:0>2.0}:{:0>2.0}", hours, minutes, seconds)
 }
 
+pub fn format_percentage(percentage: f64) -> String {
+    let scaled = percentage * 100.0;
+    if scaled < 10.0 {
+        format!("{:.2}%", scaled)
+    } else {
+        format!("{:.1}%", scaled)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

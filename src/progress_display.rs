@@ -1,5 +1,5 @@
 use crate::{
-    human_bytes::{format_bytes, format_duration, format_transfer_rate},
+    human_bytes::{format_bytes, format_duration, format_percentage, format_transfer_rate},
     ProgressStats,
 };
 
@@ -121,13 +121,14 @@ impl InteractiveDisplay {
                 );
             }
 
-            let sub_bar = format!(
-                "{:.1}%",
-                progress_stats.progress_percentage().unwrap() * 100.0
-            );
+            let sub_bar = format_percentage(progress_stats.progress_percentage().unwrap());
             eprintln!(
                 "{}{sub_bar}",
-                " ".repeat(pre_bar.len() + num_filled - sub_bar.len() / 2)
+                " ".repeat(
+                    (pre_bar.len() + num_filled - sub_bar.len() / 2)
+                        .max(pre_bar.len())
+                        .min(pre_bar.len() + bar_width + 2 - sub_bar.len())
+                )
             );
 
             eprintln!(
