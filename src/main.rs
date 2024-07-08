@@ -37,7 +37,7 @@ pub struct Cli {
         help = "Expect the size of the data to be SIZE bytes (supports binary (base 1024) units such as `K`, `M` or `G`).",
         value_parser = parse_bytes,
     )]
-    pub expected_size: Option<u128>,
+    pub size: Option<u128>,
 
     #[arg(
         short,
@@ -57,6 +57,14 @@ pub struct Cli {
         default_value = "auto"
     )]
     pub output: OutputOption,
+
+    #[arg(
+        short,
+        long,
+        value_name = "WIDTH",
+        help = "Assume terminal is WIDTH characters wide. If unspecified, `pview` will try to determine the width of the terminal or fallback to 80."
+    )]
+    pub width: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -72,13 +80,13 @@ fn main() {
 
     let progress_displayer = match cli.output {
         OutputOption::Interactive | OutputOption::Auto if io::stderr().is_terminal() => {
-            ProgressDisplayer::Interactive(InteractiveDisplay {})
+            ProgressDisplayer::Interactive(InteractiveDisplay::new(cli.width))
         }
         OutputOption::Log => ProgressDisplayer::Log(LogDisplay {}),
         _ => ProgressDisplayer::Silent,
     };
 
-    let expected_size = match cli.expected_size.unwrap_or_else(|| {
+    let expected_size = match cli.size.unwrap_or_else(|| {
         cli.files
             .iter()
             .filter(|f| f.to_str() != Some("-"))

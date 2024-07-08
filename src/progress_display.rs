@@ -75,11 +75,21 @@ impl ProgressDisplay for LogDisplay {
 }
 
 #[derive(Debug, Clone)]
-pub struct InteractiveDisplay;
+pub struct InteractiveDisplay {
+    width: Option<usize>,
+}
+
+impl InteractiveDisplay {
+    pub fn new(width: Option<usize>) -> Self {
+        Self { width }
+    }
+}
 
 impl InteractiveDisplay {
     fn display(&self, progress_stats: ProgressStats) {
-        let term_width = term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80);
+        let term_width = self
+            .width
+            .unwrap_or(term_size::dimensions_stderr().map(|(x, _)| x).unwrap_or(80));
 
         if let Some(expected_size) = progress_stats.expected_size {
             let percent = progress_stats.progress_percentage().unwrap();
