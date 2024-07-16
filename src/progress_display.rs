@@ -121,20 +121,19 @@ impl InteractiveDisplay {
                 );
             }
 
-            let sub_bar = format_percentage(progress_stats.progress_percentage().unwrap());
-            eprintln!(
-                "{}{sub_bar}",
-                " ".repeat(
-                    (pre_bar.len() + num_filled - sub_bar.len() / 2)
-                        .max(pre_bar.len())
-                        .min(pre_bar.len() + bar_width + 2 - sub_bar.len())
-                )
-            );
-
-            eprintln!(
+            let pre_sub_bar = format!(
                 "{} ETA {}",
                 format_transfer_rate(progress_stats.average_transfer_rate()),
                 format_duration(progress_stats.time_remaining().unwrap()),
+            );
+            let sub_bar = format_percentage(progress_stats.progress_percentage().unwrap());
+            eprintln!(
+                "{pre_sub_bar}{}{sub_bar}",
+                " ".repeat(
+                    (pre_bar.len() - pre_sub_bar.len()
+                        + num_filled.saturating_sub(sub_bar.len() / 2))
+                    .min(pre_bar.len() - pre_sub_bar.len() + bar_width - sub_bar.len() + 2)
+                )
             );
         } else {
             eprintln!(
@@ -142,8 +141,6 @@ impl InteractiveDisplay {
                 format_bytes(progress_stats.bytes_processed),
                 format_transfer_rate(progress_stats.transfer_rate()),
             );
-
-            eprintln!();
 
             eprintln!(
                 "{}",
@@ -159,7 +156,6 @@ impl ProgressDisplay for InteractiveDisplay {
     }
 
     fn display_progress(&self, progress_stats: ProgressStats) {
-        eprint!("\x1B[1A\x1B[2K");
         eprint!("\x1B[1A\x1B[2K");
         eprint!("\x1B[1A\x1B[2K");
 
